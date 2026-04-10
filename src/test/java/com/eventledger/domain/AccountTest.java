@@ -3,7 +3,8 @@ package com.eventledger.domain;
 import com.eventledger.domain.entity.Account;
 import com.eventledger.domain.enums.AccountType;
 import com.eventledger.domain.exception.CurrencyMismatchException;
-import com.eventledger.domain.exception.NegativeBalanceException;
+import com.eventledger.domain.exception.InsufficientBalanceException;
+import com.eventledger.domain.exception.UnsupportedCurrencyException;
 import com.eventledger.domain.valueobject.Money;
 import org.junit.jupiter.api.Test;
 
@@ -105,8 +106,24 @@ class AccountTest {
         account.credit(Money.of("50.00", "USD"));
 
         assertThatThrownBy(() -> account.debit(Money.of("100.00", "USD")))
-                .isInstanceOf(NegativeBalanceException.class)
-                .hasMessageContaining("cannot go negative");
+                .isInstanceOf(InsufficientBalanceException.class)
+                .hasMessageContaining("Insufficient balance");
+    }
+
+    @Test
+    void escrowAccountCannotGoNegative() {
+        Account account = new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.ESCROW, "USD");
+
+        assertThatThrownBy(() -> account.debit(Money.of("100.00", "USD")))
+                .isInstanceOf(InsufficientBalanceException.class);
+    }
+
+    @Test
+    void payoutAccountCannotGoNegative() {
+        Account account = new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.PAYOUT, "USD");
+
+        assertThatThrownBy(() -> account.debit(Money.of("100.00", "USD")))
+                .isInstanceOf(InsufficientBalanceException.class);
     }
 
     @Test
@@ -136,5 +153,54 @@ class AccountTest {
         assertThat(account.getAccountType()).isEqualTo(AccountType.MERCHANT);
         assertThat(account.getCreatedAt()).isNotNull();
         assertThat(account.getCreatedAt()).isEqualTo(account.getUpdatedAt());
+    }
+
+    @Test
+    void constructorRejectsNullAccountId() {
+        assertThatThrownBy(() -> new Account(null, UUID.randomUUID(), AccountType.MERCHANT, "USD"))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("accountId");
+    }
+
+    @Test
+    void constructorRejectsNullOwnerId() {
+        assertThatThrownBy(() -> new Account(UUID.randomUUID(), null, AccountType.MERCHANT, "USD"))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("ownerId");
+    }
+
+    @Test
+    void constructorRejectsNullAccountType() {
+        assertThatThrownBy(() -> new Account(UUID.randomUUID(), UUID.randomUUID(), null, "USD"))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("accountType");
+    }
+
+    @Test
+    void constructorRejectsNullCurrency() {
+        assertThatThrownBy(() -> new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.MERCHANT, null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("currency");
+    }
+
+    @Test
+    void constructorRejectsUnsupportedCurrency() {
+        assertThatThrownBy(() -> new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.MERCHANT, "XYZ"))
+                .isInstanceOf(UnsupportedCurrencyException.class);
+    }
+
+    @Test
+    void jpyAccountStartsWithZeroScaleBalance() {
+        Account account = new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.MERCHANT, "JPY");
+
+        assertThat(account.getBalance().scale()).isEqualTo(0);
+        assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void kwdAccountStartsWithThreeScaleBalance() {
+        Account account = new Account(UUID.randomUUID(), UUID.randomUUID(), AccountType.MERCHANT, "KWD");
+
+        assertThat(account.getBalance().scale()).isEqualTo(3);
     }
 }

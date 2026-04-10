@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public final class Money implements Comparable<Money> {
 
-    public static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
+    private static final RoundingMode DEFAULT_ROUNDING = RoundingMode.HALF_UP;
 
     private final BigDecimal amount;
     private final Currency currency;
@@ -23,13 +23,17 @@ public final class Money implements Comparable<Money> {
             );
         }
         this.amount = allowedScale >= 0
-                ? amount.setScale(allowedScale, ROUNDING)
+                ? amount.setScale(allowedScale, DEFAULT_ROUNDING)
                 : amount;
         this.currency = currency;
     }
 
     public static Money of(BigDecimal amount, String currencyCode) {
         return new Money(amount, Currency.getInstance(currencyCode));
+    }
+
+    public static Money of(BigDecimal amount, Currency currency) {
+        return new Money(amount, currency);
     }
 
     public static Money of(String amount, String currencyCode) {
@@ -39,7 +43,19 @@ public final class Money implements Comparable<Money> {
     public static Money zero(String currencyCode) {
         Currency currencyValue = Currency.getInstance(currencyCode);
         int scale = Math.max(currencyValue.getDefaultFractionDigits(), 0);
-        return new Money(BigDecimal.ZERO.setScale(scale, ROUNDING), currencyValue);
+        return new Money(BigDecimal.ZERO.setScale(scale, DEFAULT_ROUNDING), currencyValue);
+    }
+
+    public static Money ofMinorUnits(long minorUnits, String currencyCode) {
+        Currency cur = Currency.getInstance(currencyCode);
+        int fractionDigits = Math.max(cur.getDefaultFractionDigits(), 0);
+        BigDecimal value = BigDecimal.valueOf(minorUnits, fractionDigits);
+        return new Money(value, cur);
+    }
+
+    public long toMinorUnits() {
+        int fractionDigits = Math.max(currency.getDefaultFractionDigits(), 0);
+        return amount.movePointRight(fractionDigits).longValueExact();
     }
 
     public Money add(Money other) {

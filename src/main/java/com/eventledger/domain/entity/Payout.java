@@ -2,6 +2,7 @@ package com.eventledger.domain.entity;
 
 import com.eventledger.domain.exception.InvalidStateTransitionException;
 import com.eventledger.domain.enums.PayoutStatus;
+import com.eventledger.domain.valueobject.Money;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,7 +42,7 @@ public class Payout {
     @Column(name = "account_id", nullable = false, updatable = false)
     private UUID accountId;
 
-    @Column(name = "amount", nullable = false, precision = 19, scale = 2, updatable = false)
+    @Column(name = "amount", nullable = false, precision = 19, scale = 4, updatable = false)
     private BigDecimal amount;
 
     @Column(name = "currency", nullable = false, length = 3, updatable = false)
@@ -84,14 +86,20 @@ public class Payout {
     protected Payout() {
     }
 
-    public Payout(UUID payoutId, UUID accountId, BigDecimal amount, String currency, String idempotencyKey) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+    public Payout(UUID payoutId, UUID accountId, Money money, String idempotencyKey) {
+        Objects.requireNonNull(payoutId, "payoutId must not be null");
+        Objects.requireNonNull(accountId, "accountId must not be null");
+        Objects.requireNonNull(money, "money must not be null");
+        if (!money.isPositive()) {
             throw new IllegalArgumentException("Payout amount must be positive");
+        }
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new IllegalArgumentException("idempotencyKey must not be blank");
         }
         this.payoutId = payoutId;
         this.accountId = accountId;
-        this.amount = amount.setScale(2);
-        this.currency = currency;
+        this.amount = money.getAmount();
+        this.currency = money.getCurrency().getCurrencyCode();
         this.idempotencyKey = idempotencyKey;
         this.status = PayoutStatus.PENDING;
         Instant now = Instant.now();

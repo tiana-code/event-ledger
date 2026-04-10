@@ -3,9 +3,9 @@ package com.eventledger.domain;
 import com.eventledger.domain.entity.Payout;
 import com.eventledger.domain.enums.PayoutStatus;
 import com.eventledger.domain.exception.InvalidStateTransitionException;
+import com.eventledger.domain.valueobject.Money;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,8 +17,7 @@ class PayoutTest {
         return new Payout(
             UUID.randomUUID(),
             UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            "USD",
+            Money.of("100.00", "USD"),
             UUID.randomUUID().toString()
         );
     }
@@ -161,7 +160,7 @@ class PayoutTest {
     @Test
     void constructorWithZeroAmountThrows() {
         assertThatThrownBy(() -> new Payout(
-            UUID.randomUUID(), UUID.randomUUID(), BigDecimal.ZERO, "USD", "key-1"
+            UUID.randomUUID(), UUID.randomUUID(), Money.of("0.00", "USD"), "key-1"
         )).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Payout amount must be positive");
     }
@@ -169,9 +168,49 @@ class PayoutTest {
     @Test
     void constructorWithNegativeAmountThrows() {
         assertThatThrownBy(() -> new Payout(
-            UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("-1.00"), "USD", "key-2"
+            UUID.randomUUID(), UUID.randomUUID(), Money.of("-1.00", "USD"), "key-2"
         )).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Payout amount must be positive");
+    }
+
+    @Test
+    void constructorRejectsNullPayoutId() {
+        assertThatThrownBy(() -> new Payout(
+            null, UUID.randomUUID(), Money.of("100.00", "USD"), "key"
+        )).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("payoutId");
+    }
+
+    @Test
+    void constructorRejectsNullAccountId() {
+        assertThatThrownBy(() -> new Payout(
+            UUID.randomUUID(), null, Money.of("100.00", "USD"), "key"
+        )).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("accountId");
+    }
+
+    @Test
+    void constructorRejectsNullMoney() {
+        assertThatThrownBy(() -> new Payout(
+            UUID.randomUUID(), UUID.randomUUID(), null, "key"
+        )).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining("money");
+    }
+
+    @Test
+    void constructorRejectsBlankIdempotencyKey() {
+        assertThatThrownBy(() -> new Payout(
+            UUID.randomUUID(), UUID.randomUUID(), Money.of("100.00", "USD"), " "
+        )).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("idempotencyKey");
+    }
+
+    @Test
+    void constructorRejectsNullIdempotencyKey() {
+        assertThatThrownBy(() -> new Payout(
+            UUID.randomUUID(), UUID.randomUUID(), Money.of("100.00", "USD"), null
+        )).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("idempotencyKey");
     }
 
     @Test
@@ -188,5 +227,16 @@ class PayoutTest {
         payout.markConfirmed();
         assertThat(payout.getConfirmedAt()).isNotNull();
         assertThat(payout.getConfirmedAt()).isAfterOrEqualTo(payout.getSentAt());
+    }
+
+    @Test
+    void jpyPayoutPreservesZeroScale() {
+        Payout payout = new Payout(
+            UUID.randomUUID(), UUID.randomUUID(),
+            Money.of("1000", "JPY"), "jpy-key"
+        );
+
+        assertThat(payout.getAmount().scale()).isEqualTo(0);
+        assertThat(payout.getCurrency()).isEqualTo("JPY");
     }
 }

@@ -1,8 +1,10 @@
 package com.eventledger.domain.entity;
 
+import com.eventledger.domain.exception.StaleOwnerException;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -22,7 +24,7 @@ public class BatchLock {
     @Column(name = "batch_id", nullable = false, updatable = false, unique = true)
     private UUID batchId;
 
-    @Column(name = "owner_id", nullable = false, updatable = false, length = 255)
+    @Column(name = "owner_id", nullable = false, length = 255)
     private String ownerId;
 
     @Column(name = "fencing_token", nullable = false)
@@ -41,6 +43,16 @@ public class BatchLock {
     }
 
     public BatchLock(UUID lockId, UUID batchId, String ownerId, long fencingToken, Instant acquiredAt, Instant expiresAt) {
+        Objects.requireNonNull(lockId, "lockId must not be null");
+        Objects.requireNonNull(batchId, "batchId must not be null");
+        if (ownerId == null || ownerId.isBlank()) {
+            throw new IllegalArgumentException("ownerId must not be blank");
+        }
+        Objects.requireNonNull(acquiredAt, "acquiredAt must not be null");
+        Objects.requireNonNull(expiresAt, "expiresAt must not be null");
+        if (!expiresAt.isAfter(acquiredAt)) {
+            throw new IllegalArgumentException("expiresAt must be after acquiredAt");
+        }
         this.lockId = lockId;
         this.batchId = batchId;
         this.ownerId = ownerId;
@@ -51,7 +63,7 @@ public class BatchLock {
     }
 
     public boolean isExpired(Instant now) {
-        return now.isAfter(expiresAt);
+        return !now.isBefore(expiresAt);
     }
 
     public boolean isOwnedBy(String candidateOwnerId) {
@@ -63,6 +75,15 @@ public class BatchLock {
             throw new IllegalStateException(
                 "Cannot renew lock owned by %s from owner %s".formatted(this.ownerId, candidateOwnerId)
             );
+        }
+        if (isExpired(now)) {
+            throw new StaleOwnerException(batchId, candidateOwnerId);
+        }
+        if (!newExpiresAt.isAfter(now)) {
+            throw new IllegalArgumentException("newExpiresAt must be in the future");
+        }
+        if (newExpiresAt.isBefore(this.expiresAt)) {
+            throw new IllegalArgumentException("Cannot shorten lock expiry");
         }
         this.lastPingAt = now;
         this.expiresAt = newExpiresAt;
