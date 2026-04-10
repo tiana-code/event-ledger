@@ -9,7 +9,7 @@ public record CreatePayoutRequest(
         @NotNull
         UUID accountId,
 
-        @NotNull @DecimalMin(value = "0.01") @Digits(integer = 17, fraction = 2)
+        @NotNull @DecimalMin(value = "0", inclusive = false) @Digits(integer = 15, fraction = 4)
         BigDecimal amount,
 
         @NotBlank @Pattern(regexp = "^[A-Z]{3}$", message = "must be a 3-letter uppercase ISO currency code")

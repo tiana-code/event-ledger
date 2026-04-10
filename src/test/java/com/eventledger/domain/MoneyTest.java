@@ -148,4 +148,82 @@ class MoneyTest {
 
         assertThat(money.toString()).isEqualTo("42.50 USD");
     }
+
+    @Test
+    void ofMinorUnitsUsd() {
+        Money money = Money.ofMinorUnits(1050, "USD");
+
+        assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("10.50"));
+        assertThat(money.getCurrency()).isEqualTo(Currency.getInstance("USD"));
+    }
+
+    @Test
+    void ofMinorUnitsJpy() {
+        Money money = Money.ofMinorUnits(1000, "JPY");
+
+        assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("1000"));
+        assertThat(money.getAmount().scale()).isEqualTo(0);
+    }
+
+    @Test
+    void ofMinorUnitsKwd() {
+        Money money = Money.ofMinorUnits(1500, "KWD");
+
+        assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("1.500"));
+        assertThat(money.getAmount().scale()).isEqualTo(3);
+    }
+
+    @Test
+    void toMinorUnitsUsd() {
+        Money money = Money.of("10.50", "USD");
+
+        assertThat(money.toMinorUnits()).isEqualTo(1050L);
+    }
+
+    @Test
+    void toMinorUnitsJpy() {
+        Money money = Money.of("1000", "JPY");
+
+        assertThat(money.toMinorUnits()).isEqualTo(1000L);
+    }
+
+    @Test
+    void toMinorUnitsKwd() {
+        Money money = Money.of("1.500", "KWD");
+
+        assertThat(money.toMinorUnits()).isEqualTo(1500L);
+    }
+
+    @Test
+    void minorUnitsRoundTrip() {
+        Money original = Money.of("99.99", "USD");
+        long minorUnits = original.toMinorUnits();
+        Money restored = Money.ofMinorUnits(minorUnits, "USD");
+
+        assertThat(restored).isEqualTo(original);
+    }
+
+    @Test
+    void ofWithCurrencyObject() {
+        Currency eur = Currency.getInstance("EUR");
+        Money money = Money.of(new BigDecimal("25.50"), eur);
+
+        assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("25.50"));
+        assertThat(money.getCurrency()).isEqualTo(eur);
+    }
+
+    @Test
+    void kwdThreeDecimalPlaces() {
+        Money money = Money.of("1.234", "KWD");
+
+        assertThat(money.getAmount()).isEqualByComparingTo(new BigDecimal("1.234"));
+        assertThat(money.getAmount().scale()).isEqualTo(3);
+    }
+
+    @Test
+    void kwdRejectsFourDecimalPlaces() {
+        assertThatThrownBy(() -> Money.of("1.2345", "KWD"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("KWD");
+    }
 }

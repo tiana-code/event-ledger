@@ -2,13 +2,15 @@ package com.eventledger.domain.entity;
 
 import com.eventledger.domain.enums.AccountType;
 import com.eventledger.domain.exception.CurrencyMismatchException;
-import com.eventledger.domain.exception.NegativeBalanceException;
+import com.eventledger.domain.exception.InsufficientBalanceException;
 import com.eventledger.domain.valueobject.Money;
+import com.eventledger.domain.valueobject.SupportedCurrency;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -26,7 +28,7 @@ public class Account {
     @Column(name = "account_type", nullable = false, length = 20)
     private AccountType accountType;
 
-    @Column(name = "balance", nullable = false, precision = 19, scale = 2)
+    @Column(name = "balance", nullable = false, precision = 19, scale = 4)
     private BigDecimal balance;
 
     @Column(name = "currency", nullable = false, length = 3)
@@ -46,11 +48,16 @@ public class Account {
     }
 
     public Account(UUID accountId, UUID ownerId, AccountType accountType, String currency) {
+        Objects.requireNonNull(accountId, "accountId must not be null");
+        Objects.requireNonNull(ownerId, "ownerId must not be null");
+        Objects.requireNonNull(accountType, "accountType must not be null");
+        Objects.requireNonNull(currency, "currency must not be null");
+        SupportedCurrency supported = SupportedCurrency.fromCode(currency);
         this.accountId = accountId;
         this.ownerId = ownerId;
         this.accountType = accountType;
-        this.currency = currency;
-        this.balance = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        this.currency = supported.code();
+        this.balance = BigDecimal.ZERO.setScale(supported.fractionDigits(), RoundingMode.HALF_UP);
         Instant now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
@@ -65,8 +72,8 @@ public class Account {
     public void debit(Money amount) {
         requirePositiveAndMatchingCurrency(amount);
         BigDecimal newBalance = this.balance.subtract(amount.getAmount());
-        if (this.accountType == AccountType.MERCHANT && newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new NegativeBalanceException(accountId, balance, amount.getAmount());
+        if (!this.accountType.allowsNegativeBalance() && newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new InsufficientBalanceException(accountId, balance, amount.getAmount());
         }
         this.balance = newBalance;
         this.updatedAt = Instant.now();

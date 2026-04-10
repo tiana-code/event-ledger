@@ -1,10 +1,10 @@
 package com.eventledger.domain.entity;
 
 import com.eventledger.domain.enums.EventType;
+import com.eventledger.domain.valueobject.Money;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,7 +15,8 @@ import java.util.UUID;
         indexes = {
                 @Index(name = "idx_ledger_events_account_id", columnList = "account_id"),
                 @Index(name = "idx_ledger_events_transaction_id", columnList = "transaction_id"),
-                @Index(name = "idx_ledger_events_created_at", columnList = "created_at")
+                @Index(name = "idx_ledger_events_created_at", columnList = "created_at"),
+                @Index(name = "idx_ledger_events_journal_entry_id", columnList = "journal_entry_id")
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uq_ledger_events_idempotency_key_event_type", columnNames = {"idempotency_key", "event_type"})
@@ -33,7 +34,10 @@ public class LedgerEvent {
     @Column(name = "transaction_id", nullable = false, updatable = false)
     private UUID transactionId;
 
-    @Column(name = "amount", nullable = false, precision = 19, scale = 2, updatable = false)
+    @Column(name = "journal_entry_id", updatable = false)
+    private UUID journalEntryId;
+
+    @Column(name = "amount", nullable = false, precision = 19, scale = 4, updatable = false)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
@@ -59,33 +63,31 @@ public class LedgerEvent {
             UUID eventId,
             UUID accountId,
             UUID transactionId,
-            BigDecimal amount,
+            Money money,
             EventType eventType,
             String idempotencyKey,
-            String currency,
+            UUID journalEntryId,
             String metadata
     ) {
         Objects.requireNonNull(eventId, "eventId must not be null");
         Objects.requireNonNull(accountId, "accountId must not be null");
         Objects.requireNonNull(transactionId, "transactionId must not be null");
-        Objects.requireNonNull(amount, "amount must not be null");
+        Objects.requireNonNull(money, "money must not be null");
         Objects.requireNonNull(eventType, "eventType must not be null");
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Ledger event amount must be positive: " + amount);
+        if (!money.isPositive()) {
+            throw new IllegalArgumentException("Ledger event amount must be positive: " + money.getAmount());
         }
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new IllegalArgumentException("idempotencyKey must not be blank");
         }
-        if (currency == null || currency.isBlank()) {
-            throw new IllegalArgumentException("currency must not be blank");
-        }
         this.eventId = eventId;
         this.accountId = accountId;
         this.transactionId = transactionId;
-        this.amount = amount.setScale(2, RoundingMode.HALF_UP);
+        this.journalEntryId = journalEntryId;
+        this.amount = money.getAmount();
         this.eventType = eventType;
         this.idempotencyKey = idempotencyKey;
-        this.currency = currency;
+        this.currency = money.getCurrency().getCurrencyCode();
         this.metadata = metadata;
         this.createdAt = Instant.now();
     }
@@ -100,6 +102,10 @@ public class LedgerEvent {
 
     public UUID getTransactionId() {
         return transactionId;
+    }
+
+    public UUID getJournalEntryId() {
+        return journalEntryId;
     }
 
     public BigDecimal getAmount() {

@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface LedgerEventRepository extends JpaRepository<LedgerEvent, UUID> {
@@ -21,7 +20,7 @@ public interface LedgerEventRepository extends JpaRepository<LedgerEvent, UUID> 
 
     List<LedgerEvent> findByTransactionId(UUID transactionId);
 
-    Optional<LedgerEvent> findByIdempotencyKey(String idempotencyKey);
+    List<LedgerEvent> findAllByIdempotencyKey(String idempotencyKey);
 
     @Query("""
         SELECT COALESCE(SUM(

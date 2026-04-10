@@ -27,17 +27,22 @@ public interface BatchLockRepository extends JpaRepository<BatchLock, UUID> {
     @Modifying
     @Query(value = """
         INSERT INTO batch_locks (lock_id, batch_id, owner_id, fencing_token, acquired_at, expires_at, last_ping_at)
-        SELECT CAST(:lockId AS uuid), CAST(:batchId AS uuid), :ownerId, :fencingToken,
-               CAST(:acquiredAt AS timestamptz), CAST(:expiresAt AS timestamptz), CAST(:acquiredAt AS timestamptz)
-        WHERE NOT EXISTS (
-            SELECT 1 FROM batch_locks WHERE batch_id = CAST(:batchId AS uuid) AND expires_at > NOW()
-        )
+        VALUES (CAST(:lockId AS uuid), CAST(:batchId AS uuid), :ownerId,
+                nextval('batch_lock_fencing_seq'),
+                CAST(:acquiredAt AS timestamptz), CAST(:expiresAt AS timestamptz), CAST(:acquiredAt AS timestamptz))
+        ON CONFLICT (batch_id) DO UPDATE
+        SET lock_id = CAST(:lockId AS uuid),
+            owner_id = :ownerId,
+            fencing_token = nextval('batch_lock_fencing_seq'),
+            acquired_at = CAST(:acquiredAt AS timestamptz),
+            expires_at = CAST(:expiresAt AS timestamptz),
+            last_ping_at = CAST(:acquiredAt AS timestamptz)
+        WHERE batch_locks.expires_at <= NOW()
     """, nativeQuery = true)
     int tryAcquire(
         @Param("lockId") UUID lockId,
         @Param("batchId") UUID batchId,
         @Param("ownerId") String ownerId,
-        @Param("fencingToken") long fencingToken,
         @Param("acquiredAt") Instant acquiredAt,
         @Param("expiresAt") Instant expiresAt
     );
