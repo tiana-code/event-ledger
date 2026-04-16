@@ -1,4 +1,4 @@
-package com.eventledger.domain.exception;
+package com.eventledger.exception;
 
 import java.util.UUID;
 

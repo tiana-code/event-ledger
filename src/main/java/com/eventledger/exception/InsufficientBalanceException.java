@@ -1,4 +1,4 @@
-package com.eventledger.domain.exception;
+package com.eventledger.exception;
 
 import java.math.BigDecimal;
 import java.util.UUID;

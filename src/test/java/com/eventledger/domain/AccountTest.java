@@ -2,9 +2,9 @@ package com.eventledger.domain;
 
 import com.eventledger.domain.entity.Account;
 import com.eventledger.domain.enums.AccountType;
-import com.eventledger.domain.exception.CurrencyMismatchException;
-import com.eventledger.domain.exception.InsufficientBalanceException;
-import com.eventledger.domain.exception.UnsupportedCurrencyException;
+import com.eventledger.exception.CurrencyMismatchException;
+import com.eventledger.exception.InsufficientBalanceException;
+import com.eventledger.exception.UnsupportedCurrencyException;
 import com.eventledger.domain.valueobject.Money;
 import org.junit.jupiter.api.Test;
 

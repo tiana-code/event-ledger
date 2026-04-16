@@ -1,8 +1,8 @@
 package com.eventledger.domain.entity;
 
 import com.eventledger.domain.enums.AccountType;
-import com.eventledger.domain.exception.CurrencyMismatchException;
-import com.eventledger.domain.exception.InsufficientBalanceException;
+import com.eventledger.exception.CurrencyMismatchException;
+import com.eventledger.exception.InsufficientBalanceException;
 import com.eventledger.domain.valueobject.Money;
 import com.eventledger.domain.valueobject.SupportedCurrency;
 import jakarta.persistence.*;

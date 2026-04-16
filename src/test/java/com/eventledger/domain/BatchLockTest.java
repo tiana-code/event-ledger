@@ -1,7 +1,7 @@
 package com.eventledger.domain;
 
 import com.eventledger.domain.entity.BatchLock;
-import com.eventledger.domain.exception.StaleOwnerException;
+import com.eventledger.exception.StaleOwnerException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

@@ -1,6 +1,6 @@
 # event-ledger - Double-Entry Bookkeeping Engine
 
-Domain layer for a double-entry bookkeeping system. Implements ledger event recording with constructor-level validation, account balance management with optimistic locking, a payout state machine with guarded transitions and lifecycle timestamps, and batch lock infrastructure with fencing tokens for distributed write coordination.
+Double-entry bookkeeping domain: append-only ledger events, optimistic-locked balances, payout state machine, batch locks with fencing tokens. Java 21, Spring Boot 3.
 
 ## What It Does
 

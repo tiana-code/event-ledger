@@ -1,6 +1,6 @@
 package com.eventledger.domain.entity;
 
-import com.eventledger.domain.exception.StaleOwnerException;
+import com.eventledger.exception.StaleOwnerException;
 import jakarta.persistence.*;
 
 import java.time.Instant;

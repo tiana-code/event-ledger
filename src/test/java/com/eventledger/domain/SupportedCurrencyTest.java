@@ -1,6 +1,6 @@
 package com.eventledger.domain;
 
-import com.eventledger.domain.exception.UnsupportedCurrencyException;
+import com.eventledger.exception.UnsupportedCurrencyException;
 import com.eventledger.domain.valueobject.SupportedCurrency;
 import org.junit.jupiter.api.Test;
 

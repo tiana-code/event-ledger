@@ -1,7 +1,7 @@
 package com.eventledger.domain.entity;
 
 import com.eventledger.domain.enums.EventType;
-import com.eventledger.domain.exception.UnbalancedPostingException;
+import com.eventledger.exception.UnbalancedPostingException;
 import com.eventledger.domain.valueobject.Money;
 import jakarta.persistence.*;
 

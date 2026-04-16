@@ -1,6 +1,6 @@
 package com.eventledger.domain.valueobject;
 
-import com.eventledger.domain.exception.UnsupportedCurrencyException;
+import com.eventledger.exception.UnsupportedCurrencyException;
 
 import java.util.Currency;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.eventledger.domain.exception;
+package com.eventledger.exception;
 
 public class UnsupportedCurrencyException extends RuntimeException {
 
