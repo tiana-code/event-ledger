@@ -1,6 +1,6 @@
 package com.eventledger.domain.entity;
 
-import com.eventledger.domain.exception.InvalidStateTransitionException;
+import com.eventledger.exception.InvalidStateTransitionException;
 import com.eventledger.domain.enums.PayoutStatus;
 import com.eventledger.domain.valueobject.Money;
 import jakarta.persistence.*;

@@ -2,7 +2,7 @@ package com.eventledger.domain;
 
 import com.eventledger.domain.entity.Payout;
 import com.eventledger.domain.enums.PayoutStatus;
-import com.eventledger.domain.exception.InvalidStateTransitionException;
+import com.eventledger.exception.InvalidStateTransitionException;
 import com.eventledger.domain.valueobject.Money;
 import org.junit.jupiter.api.Test;
 

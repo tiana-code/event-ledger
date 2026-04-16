@@ -2,8 +2,8 @@ package com.eventledger.service;
 
 import com.eventledger.domain.entity.Account;
 import com.eventledger.domain.entity.JournalEntry;
-import com.eventledger.domain.exception.AccountNotFoundException;
-import com.eventledger.domain.exception.CurrencyMismatchException;
+import com.eventledger.exception.AccountNotFoundException;
+import com.eventledger.exception.CurrencyMismatchException;
 import com.eventledger.domain.valueobject.Money;
 import com.eventledger.repository.AccountRepository;
 import com.eventledger.repository.JournalEntryRepository;
@@ -34,8 +34,9 @@ public class PostingServiceImpl implements PostingService {
             return existing.get();
         }
 
-        UUID firstId = debitAccountId.compareTo(creditAccountId) < 0 ? debitAccountId : creditAccountId;
-        UUID secondId = debitAccountId.compareTo(creditAccountId) < 0 ? creditAccountId : debitAccountId;
+        boolean debitFirst = debitAccountId.compareTo(creditAccountId) < 0;
+        UUID firstId = debitFirst ? debitAccountId : creditAccountId;
+        UUID secondId = debitFirst ? creditAccountId : debitAccountId;
 
         Account first = accountRepository.findByIdForUpdate(firstId)
                 .orElseThrow(() -> new AccountNotFoundException(firstId));

@@ -1,16 +1,16 @@
 package com.eventledger.config;
 
-import com.eventledger.domain.exception.AccountNotFoundException;
-import com.eventledger.domain.exception.CurrencyMismatchException;
-import com.eventledger.domain.exception.IdempotencyConflictException;
-import com.eventledger.domain.exception.InsufficientBalanceException;
-import com.eventledger.domain.exception.InvalidStateTransitionException;
-import com.eventledger.domain.exception.LedgerInvariantViolationException;
-import com.eventledger.domain.exception.LockAcquisitionException;
-import com.eventledger.domain.exception.PayoutNotFoundException;
-import com.eventledger.domain.exception.StaleOwnerException;
-import com.eventledger.domain.exception.UnbalancedPostingException;
-import com.eventledger.domain.exception.UnsupportedCurrencyException;
+import com.eventledger.exception.AccountNotFoundException;
+import com.eventledger.exception.CurrencyMismatchException;
+import com.eventledger.exception.IdempotencyConflictException;
+import com.eventledger.exception.InsufficientBalanceException;
+import com.eventledger.exception.InvalidStateTransitionException;
+import com.eventledger.exception.LedgerInvariantViolationException;
+import com.eventledger.exception.LockAcquisitionException;
+import com.eventledger.exception.PayoutNotFoundException;
+import com.eventledger.exception.StaleOwnerException;
+import com.eventledger.exception.UnbalancedPostingException;
+import com.eventledger.exception.UnsupportedCurrencyException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
